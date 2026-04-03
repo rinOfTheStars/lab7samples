@@ -3,6 +3,8 @@ package com.artificesoft.lab7.samples.kitchen;
 import com.artificesoft.lab7.samples.AbstractNumberedThread;
 
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.time.temporal.TemporalUnit;
 import java.util.Optional;
 
 public class WaiterThread extends AbstractNumberedThread {
@@ -17,20 +19,38 @@ public class WaiterThread extends AbstractNumberedThread {
         while (!KitchenSimulator.IS_SET_UP_COMPLETE) {
             continue;
         }
-        while (KitchenSimulator.INSTANCE.remaining.getAcquire() > 0 || KitchenSimulator.INSTANCE.full.getAcquire() > 0) {
-            Optional<Meal> res = KitchenSimulator.INSTANCE.takeMeal();
-            res.ifPresentOrElse(m -> System.out.println("Thread " + this + " Successfully got meal " + m), () -> {
-                // for reasons beyond my comprehension, performing this check with Optional#ifPresent causes a race condition, while using Optional#ifPresentOrElse doesn't?
-                // does spawning a very short-lived thread here *really* have that much of an effect???//
-                if (lastFailureTime == null) {
-                    lastFailureTime = Instant.now();
-                }
+        while (KitchenSimulator.INSTANCE.remainingToServe.getAcquire() > 0) {
+            boolean success = false;
+            try {
+                success = KitchenSimulator.INSTANCE.serveMeal(getId());
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+            if (!success) {
                 Instant now = Instant.now();
-                if (now.toEpochMilli() - lastFailureTime.toEpochMilli() >= 5000) {
-                    System.out.println("WaiterThread " + getId() + " hasn't acquired anything in a while!");
+                if (lastFailureTime == null) {
                     lastFailureTime = now;
+                } else {
+                    if (KitchenSimulator.INSTANCE.remainingToServe.getPlain() == 0) {
+                        System.out.println("No work for WaiterThread " + getId() + " to do but didn't stop properly, stopping now instead...");
+                        break;
+                    }
+                    Instant durationCheck = lastFailureTime.plusMillis(10000);
+                    if (now.compareTo(durationCheck) >= 0) {
+                        System.err.println("An unusually long time has passed since WaiterThread " + getId()
+                                + " has successfully served a meal. Something is probably wrong!" +
+                                " Supposedly, " + KitchenSimulator.INSTANCE.remainingToServe.getPlain() + " serving jobs remain?");
+                        lastFailureTime = now;
+                    }
                 }
-            });
+            } else {
+                try {
+                    Thread.sleep(500);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+
         }
     }
 }

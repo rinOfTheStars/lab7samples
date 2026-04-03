@@ -1,11 +1,7 @@
 package com.artificesoft.lab7.samples.kitchen;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.PriorityQueue;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.TreeSet;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -20,12 +16,13 @@ public class KitchenSimulator {
     private static final int ORDER_SLOTS = 12;
 
     private final ReentrantLock queueLock = new ReentrantLock(true);
-    private final PriorityQueue<Meal> queue = new PriorityQueue<>();
+    private final TreeSet<Sealable<Object>> queue = new TreeSet<>();
 
-    public final AtomicInteger empty = new AtomicInteger(ORDER_SLOTS);
-    public final AtomicInteger full = new AtomicInteger(0);
-    public final AtomicInteger remaining = new AtomicInteger(TOTAL_ORDERS);
-    public final ReentrantLock prodLock = new ReentrantLock(true);
+    private final Semaphore full = new Semaphore(ORDER_SLOTS, true);
+    private final Semaphore empty = new Semaphore(ORDER_SLOTS, true);
+
+    public final AtomicInteger remainingToMake = new AtomicInteger(TOTAL_ORDERS);
+    public final AtomicInteger remainingToServe = new AtomicInteger(TOTAL_ORDERS);
 
 
     private KitchenSimulator() {
@@ -37,43 +34,67 @@ public class KitchenSimulator {
             for (int i = 0; i < NUMBER_OF_COOKS; i++) {
                 ChefThread c = new ChefThread(i);
                 e.execute(c);
+                System.out.println("Made a chef!");
             }
             for (int i = 0; i < NUMBER_OF_WAITERS; i++) {
                 WaiterThread w = new WaiterThread(i);
                 e.execute(w);
+                System.out.println("Made a waiter!");
             }
+            for (int i = 0; i < ORDER_SLOTS; i++) {
+                INSTANCE.queue.add(new Sealable<>(new Object()));
+                System.out.println("Prepared a slot!");
+            }
+            System.out.println("Setting up empty semaphore");
+            INSTANCE.empty.drainPermits();
+            System.out.println("Set up complete!");
             IS_SET_UP_COMPLETE = true;
-        }
-    }
-    public synchronized Optional<Meal> takeMeal() {
-        if (queueLock.isLocked()) {
-            return Optional.empty();
-        } else if (full.get() == 0) {
-            return Optional.empty();
-        } else {
-            queueLock.lock();
-            Meal m = queue.poll();
-            if (m == null) throw new AssertionError("A desynchronization occurred between full slots counter and the actual number of full slots");
-            full.getAndDecrement();
-            empty.getAndIncrement();
-            queueLock.unlock();
-            return Optional.of(m);
+            while (INSTANCE.remainingToServe.getAcquire() > 0) {
+                if (INSTANCE.remainingToServe.getPlain() <= 0) break;
+            }
+            System.out.println("Done!");
         }
     }
 
-    public synchronized boolean putMeal(Meal m) {
-        if (queueLock.isLocked()) {
-            return false;
-        } else if (empty.get() == 0) {
-            return false;
-        } else {
+    public boolean plateMeal(int id) throws InterruptedException {
+        // "take" a full slot token, "release" an empty slot one
+        if (full.tryAcquire(500, TimeUnit.MILLISECONDS)) {
+            System.out.println("ChefThread " + id + " starting plate attempt");
+            empty.release();
+            // actually update an object in the queue
             queueLock.lock();
-            queue.add(m);
-            if (queue.size() > ORDER_SLOTS) throw new AssertionError("A desynchronization occurred between empty slots counter and the actual number of empty slots");
-            full.getAndIncrement();
-            empty.getAndDecrement();
+            Sealable<Object> s = queue.pollLast();
+            if (s == null) throw new AssertionError("Queue failure (plating) @ " + id);
+            if (s.isSealed()) throw new AssertionError("Seal state error (plating) @ " + id);
+            s.seal();
+            queue.add(s);
             queueLock.unlock();
+            int r = remainingToMake.getAndDecrement();
+            System.out.println("Success for ChefThread " + id + ", " + r + " remaining");
             return true;
+        } else {
+            return false;
+        }
+    }
+
+    public boolean serveMeal(int id) throws InterruptedException {
+        // "take" an empty slot token, "release" a full slot one
+        if (empty.tryAcquire(500, TimeUnit.MILLISECONDS)) {
+            System.out.println("WaiterThread " + id + " starting serve attempt");
+            full.release();
+            // actually update an object in the queue
+            queueLock.lock();
+            Sealable<Object> s = queue.pollFirst();
+            if (s == null) throw new AssertionError("Queue failure (serving) @ " + id);
+            if (!s.isSealed()) throw new AssertionError("Seal state error (serving) @" + id);
+            queue.add(new Sealable<>(new Object()));
+            if (queue.size() != ORDER_SLOTS) throw new AssertionError("Queue failure (restocking) @ " + id);
+            queueLock.unlock();
+            int r = remainingToServe.getAndDecrement();
+            System.out.println("Success for WaiterThread " + id + ", " + r + " remaining");
+            return true;
+        } else {
+            return false;
         }
     }
 }
