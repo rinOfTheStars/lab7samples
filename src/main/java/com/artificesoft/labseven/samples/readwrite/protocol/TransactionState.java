@@ -1,4 +1,4 @@
-package com.artificesoft.lab7.samples.readwrite.protocol;
+package com.artificesoft.labseven.samples.readwrite.protocol;
 
 public enum TransactionState {
     SUCCESS,

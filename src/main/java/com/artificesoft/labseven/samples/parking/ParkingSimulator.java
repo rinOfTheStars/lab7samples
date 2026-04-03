@@ -1,4 +1,4 @@
-package com.artificesoft.lab7.samples.parking;
+package com.artificesoft.labseven.samples.parking;
 
 import java.util.concurrent.*;
 

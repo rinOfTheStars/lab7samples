@@ -1,9 +1,9 @@
-package com.artificesoft.lab7.samples.readwrite.agent;
+package com.artificesoft.labseven.samples.readwrite.agent;
 
-import com.artificesoft.lab7.samples.readwrite.ReadWriteSim;
-import com.artificesoft.lab7.samples.readwrite.protocol.SeatSnapshot;
-import com.artificesoft.lab7.samples.readwrite.protocol.TransactionResult;
-import com.artificesoft.lab7.samples.readwrite.protocol.TransactionState;
+import com.artificesoft.labseven.samples.readwrite.ReadWriteSim;
+import com.artificesoft.labseven.samples.readwrite.protocol.SeatSnapshot;
+import com.artificesoft.labseven.samples.readwrite.protocol.TransactionResult;
+import com.artificesoft.labseven.samples.readwrite.protocol.TransactionState;
 
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;

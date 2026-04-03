@@ -1,4 +1,4 @@
-package com.artificesoft.lab7.samples;
+package com.artificesoft.labseven.samples;
 
 public abstract class AbstractNumberedThread implements Runnable {
     private final int id;

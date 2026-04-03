@@ -1,6 +1,6 @@
-package com.artificesoft.lab7.samples.kitchen;
+package com.artificesoft.labseven.samples.kitchen;
 
-import com.artificesoft.lab7.samples.AbstractNumberedThread;
+import com.artificesoft.labseven.samples.AbstractNumberedThread;
 
 import java.time.Instant;
 

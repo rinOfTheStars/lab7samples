@@ -1,9 +1,9 @@
-package com.artificesoft.lab7.samples.readwrite;
+package com.artificesoft.labseven.samples.readwrite;
 
-import com.artificesoft.lab7.samples.readwrite.agent.Agent;
-import com.artificesoft.lab7.samples.readwrite.agent.PriceUpdater;
-import com.artificesoft.lab7.samples.readwrite.protocol.SeatData;
-import com.artificesoft.lab7.samples.readwrite.protocol.SeatSnapshot;
+import com.artificesoft.labseven.samples.readwrite.agent.Agent;
+import com.artificesoft.labseven.samples.readwrite.agent.PriceUpdater;
+import com.artificesoft.labseven.samples.readwrite.protocol.SeatData;
+import com.artificesoft.labseven.samples.readwrite.protocol.SeatSnapshot;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;

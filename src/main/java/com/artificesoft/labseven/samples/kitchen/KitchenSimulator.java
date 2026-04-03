@@ -1,4 +1,4 @@
-package com.artificesoft.lab7.samples.kitchen;
+package com.artificesoft.labseven.samples.kitchen;
 
 import java.util.TreeSet;
 import java.util.concurrent.*;

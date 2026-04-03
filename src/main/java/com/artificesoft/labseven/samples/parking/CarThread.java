@@ -1,6 +1,6 @@
-package com.artificesoft.lab7.samples.parking;
+package com.artificesoft.labseven.samples.parking;
 
-import com.artificesoft.lab7.samples.AbstractNumberedThread;
+import com.artificesoft.labseven.samples.AbstractNumberedThread;
 
 import java.util.concurrent.ThreadLocalRandom;
 

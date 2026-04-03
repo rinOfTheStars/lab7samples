@@ -1,11 +1,8 @@
-package com.artificesoft.lab7.samples.kitchen;
+package com.artificesoft.labseven.samples.kitchen;
 
-import com.artificesoft.lab7.samples.AbstractNumberedThread;
+import com.artificesoft.labseven.samples.AbstractNumberedThread;
 
 import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.time.temporal.TemporalUnit;
-import java.util.Optional;
 
 public class WaiterThread extends AbstractNumberedThread {
     public WaiterThread(int id) {

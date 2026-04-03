@@ -1,4 +1,4 @@
-package com.artificesoft.lab7.samples.readwrite;
+package com.artificesoft.labseven.samples.readwrite;
 
 @FunctionalInterface
 public interface ComparisonPredicate<E> {
